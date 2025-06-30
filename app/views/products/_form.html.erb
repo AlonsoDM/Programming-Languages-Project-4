@@ -1,0 +1,72 @@
+<%= form_with model: product, local: true do |form| %>
+  <% if product.errors.any? %>
+    <div class="alert alert-danger">
+      <h4><%= pluralize(product.errors.count, "error") %> prohibited this product from being saved:</h4>
+      <ul class="mb-0">
+        <% product.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="row">
+    <div class="col-md-6">
+      <div class="mb-3">
+        <%= form.label :name, class: "form-label" %>
+        <%= form.text_field :name, class: "form-control" %>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="mb-3">
+        <%= form.label :sku, "SKU", class: "form-label" %>
+        <%= form.text_field :sku, class: "form-control" %>
+        <div class="form-text">Stock Keeping Unit - must be unique</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mb-3">
+    <%= form.label :description, class: "form-label" %>
+    <%= form.text_area :description, class: "form-control", rows: 3 %>
+  </div>
+
+  <div class="row">
+    <div class="col-md-4">
+      <div class="mb-3">
+        <%= form.label :price, class: "form-label" %>
+        <div class="input-group">
+          <span class="input-group-text">$</span>
+          <%= form.number_field :price, step: 0.01, min: 0.01, class: "form-control" %>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="mb-3">
+        <%= form.label :stock_quantity, "Current Stock", class: "form-label" %>
+        <%= form.number_field :stock_quantity, min: 0, class: "form-control" %>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="mb-3">
+        <%= form.label :minimum_stock, "Minimum Stock", class: "form-label" %>
+        <%= form.number_field :minimum_stock, min: 0, class: "form-control" %>
+        <div class="form-text">Alert when stock falls below this level</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mb-3">
+    <%= form.label :tax_rate_id, "Tax Rate", class: "form-label" %>
+    <%= form.select :tax_rate_id, options_from_collection_for_select(@tax_rates, :id, :display_name, product.tax_rate_id),
+                  { prompt: 'Select a tax rate' }, { class: "form-select" } %>
+  </div>
+
+  <div class="mb-3">
+    <%= form.submit class: "btn btn-primary" %>
+    <%= link_to "Cancel", products_path, class: "btn btn-secondary" %>
+  </div>
+<% end %>

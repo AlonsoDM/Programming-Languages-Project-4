@@ -2,10 +2,10 @@
   <h1>Invoice #<%= @invoice.invoice_number %></h1>
   <div>
     <% if @invoice.draft? %>
-      <%= link_to "Send Invoice", send_invoice_invoice_path(@invoice), method: :patch,
-                class: "btn btn-success",
-                confirm: "This will mark the invoice as sent and update stock. Continue?",
-                data: { turbo_method: :patch } %>
+      <%= button_to "Send Invoice", send_invoice_invoice_path(@invoice),
+                  method: :patch,
+                  class: "btn btn-success",
+                  form: { data: { turbo_confirm: "This will mark the invoice as sent and update stock. Continue?" } } %>
       <%= link_to "Edit", edit_invoice_path(@invoice), class: "btn btn-primary" %>
     <% end %>
     <%= link_to "Download PDF", pdf_invoice_path(@invoice), class: "btn btn-info" %>

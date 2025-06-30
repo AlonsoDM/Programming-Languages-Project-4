@@ -27,7 +27,10 @@
 
     <div class="col-md-2">
       <%= f.label :tax_rate, "Tax Rate (%)", class: "form-label" %>
-      <%= f.number_field :tax_rate, class: "form-control tax-rate-input", step: 0.01, min: 0, value: f.object&.tax_rate %>
+      <%= f.select :tax_rate,
+                   options_from_collection_for_select(TaxRate.active.ordered, :rate, :display_name, f.object&.tax_rate),
+                   { prompt: 'Select tax rate' },
+                   { class: "form-select tax-rate-input" } %>
     </div>
 
     <div class="col-md-1">

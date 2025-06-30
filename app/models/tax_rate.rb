@@ -1,4 +1,6 @@
 class TaxRate < ApplicationRecord
+  has_many :products, dependent: :restrict_with_error
+
   validates :name, presence: true, uniqueness: true
   validates :rate, presence: true, numericality: { greater_than_or_equal_to: 0 }
 
