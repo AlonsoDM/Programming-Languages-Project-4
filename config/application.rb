@@ -23,5 +23,6 @@ module ProgrammingLanguagesProject3
     #
     # config.time_zone = "Central Time (US & Canada)"
     # config.eager_load_paths << Rails.root.join("extras")
+    config.active_record.nested_attributes_options = { allow_destroy: true, reject_if: :all_blank }
   end
 end

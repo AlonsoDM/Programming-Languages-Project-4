@@ -1,0 +1,109 @@
+<h1>Edit Invoice</h1>
+
+<div class="card">
+  <div class="card-body">
+    <%= render 'form', invoice: @invoice %>
+  </div>
+</div>
+
+<!-- JavaScript for dynamic invoice items -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  let itemIndex = <%= @invoice.invoice_items.length %>;
+
+  // Add new item
+  document.getElementById('add-item').addEventListener('click', function() {
+    const template = document.getElementById('invoice-item-template');
+    const clone = template.content.cloneNode(true);
+
+    // Replace INDEX with actual index
+    clone.innerHTML = clone.innerHTML.replace(/INDEX/g, itemIndex);
+
+    document.getElementById('invoice-items').appendChild(clone);
+    itemIndex++;
+
+    updateCalculations();
+  });
+
+  // Remove item
+  document.addEventListener('click', function(e) {
+    if (e.target.closest('.remove-item')) {
+      const item = e.target.closest('.invoice-item');
+      const destroyField = item.querySelector('input[name*="_destroy"]');
+
+      if (destroyField) {
+        destroyField.value = '1';
+        item.style.display = 'none';
+      } else {
+        item.remove();
+      }
+
+      updateCalculations();
+    }
+  });
+
+  // Product selection
+  document.addEventListener('change', function(e) {
+    if (e.target.classList.contains('product-select')) {
+      const option = e.target.selectedOptions[0];
+      const item = e.target.closest('.invoice-item');
+
+      if (option.value) {
+        item.querySelector('.unit-price-input').value = option.dataset.price;
+        item.querySelector('.tax-rate-input').value = option.dataset.taxRate;
+        updateItemTotal(item);
+      }
+    }
+  });
+
+  // Quantity or price changes
+  document.addEventListener('input', function(e) {
+    if (e.target.classList.contains('quantity-input') ||
+        e.target.classList.contains('unit-price-input') ||
+        e.target.classList.contains('tax-rate-input')) {
+      const item = e.target.closest('.invoice-item');
+      updateItemTotal(item);
+    }
+  });
+
+  function updateItemTotal(item) {
+    const quantity = parseFloat(item.querySelector('.quantity-input').value) || 0;
+    const unitPrice = parseFloat(item.querySelector('.unit-price-input').value) || 0;
+    const taxRate = parseFloat(item.querySelector('.tax-rate-input').value) || 0;
+
+    const subtotal = quantity * unitPrice;
+    const tax = subtotal * (taxRate / 100);
+    const total = subtotal + tax;
+
+    item.querySelector('.item-total').textContent = ' + total.toFixed(2);
+
+    updateCalculations();
+  }
+
+  function updateCalculations() {
+    let subtotal = 0;
+    let totalTax = 0;
+
+    document.querySelectorAll('.invoice-item:not([style*="display: none"])').forEach(function(item) {
+      const quantity = parseFloat(item.querySelector('.quantity-input').value) || 0;
+      const unitPrice = parseFloat(item.querySelector('.unit-price-input').value) || 0;
+      const taxRate = parseFloat(item.querySelector('.tax-rate-input').value) || 0;
+
+      const itemSubtotal = quantity * unitPrice;
+      const itemTax = itemSubtotal * (taxRate / 100);
+
+      subtotal += itemSubtotal;
+      totalTax += itemTax;
+    });
+
+    const total = subtotal + totalTax;
+
+    document.getElementById('invoice-subtotal').textContent = ' + subtotal.toFixed(2);
+    document.getElementById('invoice-tax').textContent = ' + totalTax.toFixed(2);
+    document.getElementById('invoice-total').textContent = ' + total.toFixed(2);
+  }
+
+  // Initial calculation
+  updateCalculations();
+});
+</script>

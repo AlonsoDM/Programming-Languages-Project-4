@@ -1,0 +1,64 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1>Invoices</h1>
+  <%= link_to "New Invoice", new_invoice_path, class: "btn btn-primary" %>
+</div>
+
+<!-- Filter by Status -->
+<div class="card mb-4">
+  <div class="card-body">
+    <div class="btn-group" role="group">
+      <%= link_to "All", invoices_path, class: "btn #{'btn-primary' if params[:status].blank?} #{'btn-outline-primary' unless params[:status].blank?}" %>
+      <%= link_to "Draft", invoices_path(status: 'draft'), class: "btn #{'btn-primary' if params[:status] == 'draft'} #{'btn-outline-primary' unless params[:status] == 'draft'}" %>
+      <%= link_to "Sent", invoices_path(status: 'sent'), class: "btn #{'btn-primary' if params[:status] == 'sent'} #{'btn-outline-primary' unless params[:status] == 'sent'}" %>
+      <%= link_to "Paid", invoices_path(status: 'paid'), class: "btn #{'btn-primary' if params[:status] == 'paid'} #{'btn-outline-primary' unless params[:status] == 'paid'}" %>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>Invoice #</th>
+            <th>Client</th>
+            <th>Date</th>
+            <th>Due Date</th>
+            <th>Total</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @invoices.each do |invoice| %>
+            <tr>
+              <td><%= link_to invoice.invoice_number, invoice_path(invoice) %></td>
+              <td><%= invoice.client.name %></td>
+              <td><%= invoice.invoice_date.strftime('%m/%d/%Y') %></td>
+              <td><%= invoice.due_date&.strftime('%m/%d/%Y') || 'N/A' %></td>
+              <td>$<%= sprintf('%.2f', invoice.total) %></td>
+              <td>
+                <span class="badge bg-<%= case invoice.status
+                  when 'paid' then 'success'
+                  when 'sent' then 'warning'
+                  when 'cancelled' then 'danger'
+                  else 'secondary'
+                  end %>">
+                  <%= invoice.status_display %>
+                </span>
+              </td>
+              <td>
+                <%= link_to "View", invoice_path(invoice), class: "btn btn-sm btn-outline-primary" %>
+                <% if invoice.can_be_edited? %>
+                  <%= link_to "Edit", edit_invoice_path(invoice), class: "btn btn-sm btn-outline-secondary" %>
+                <% end %>
+                <%= link_to "PDF", pdf_invoice_path(invoice), class: "btn btn-sm btn-outline-info" %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

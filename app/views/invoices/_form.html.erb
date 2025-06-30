@@ -1,0 +1,136 @@
+<%= form_with model: invoice, local: true do |form| %>
+  <% if invoice.errors.any? %>
+    <div class="alert alert-danger">
+      <h4><%= pluralize(invoice.errors.count, "error") %> prohibited this invoice from being saved:</h4>
+      <ul class="mb-0">
+        <% invoice.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="row">
+    <div class="col-md-6">
+      <div class="mb-3">
+        <%= form.label :client_id, "Client", class: "form-label" %>
+        <%= form.select :client_id, options_from_collection_for_select(@clients, :id, :display_name, invoice.client_id),
+                      { prompt: 'Select a client' }, { class: "form-select" } %>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="mb-3">
+        <%= form.label :invoice_date, "Invoice Date", class: "form-label" %>
+        <%= form.date_field :invoice_date, class: "form-control" %>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="mb-3">
+        <%= form.label :due_date, "Due Date", class: "form-label" %>
+        <%= form.date_field :due_date, class: "form-control" %>
+      </div>
+    </div>
+  </div>
+
+  <div class="mb-3">
+    <%= form.label :notes, class: "form-label" %>
+    <%= form.text_area :notes, class: "form-control", rows: 3 %>
+  </div>
+
+  <!-- Invoice Items -->
+  <div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h5 class="mb-0">Invoice Items</h5>
+      <button type="button" class="btn btn-sm btn-success" id="add-item">
+        <i class="bi bi-plus"></i> Add Item
+      </button>
+    </div>
+    <div class="card-body">
+      <div id="invoice-items">
+        <%= form.fields_for :invoice_items do |item_form| %>
+          <%= render 'invoice_item_fields', f: item_form %>
+        <% end %>
+      </div>
+
+      <!-- Totals -->
+      <div class="row mt-3">
+        <div class="col-md-8"></div>
+        <div class="col-md-4">
+          <table class="table table-sm">
+            <tr>
+              <td><strong>Subtotal:</strong></td>
+              <td class="text-end" id="invoice-subtotal">$0.00</td>
+            </tr>
+            <tr>
+              <td><strong>Tax:</strong></td>
+              <td class="text-end" id="invoice-tax">$0.00</td>
+            </tr>
+            <tr class="table-primary">
+              <td><strong>Total:</strong></td>
+              <td class="text-end" id="invoice-total">$0.00</td>
+            </tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mb-3">
+    <%= form.submit class: "btn btn-primary" %>
+    <%= link_to "Cancel", invoices_path, class: "btn btn-secondary" %>
+  </div>
+<% end %>
+
+<!-- Invoice Item Fields Template -->
+<template id="invoice-item-template">
+  <div class="invoice-item border p-3 mb-3">
+    <div class="row">
+      <div class="col-md-4">
+        <label class="form-label">Product</label>
+        <select name="invoice[invoice_items_attributes][INDEX][product_id]" class="form-select product-select">
+          <option value="">Select a product</option>
+          <% @products.each do |product| %>
+            <option value="<%= product.id %>"
+                    data-price="<%= product.price %>"
+                    data-tax-rate="<%= product.tax_rate.rate %>"
+                    data-stock="<%= product.stock_quantity %>">
+              <%= product.name %> - $<%= sprintf('%.2f', product.price) %> (Stock: <%= product.stock_quantity %>)
+            </option>
+          <% end %>
+        </select>
+      </div>
+
+      <div class="col-md-2">
+        <label class="form-label">Quantity</label>
+        <input type="number" name="invoice[invoice_items_attributes][INDEX][quantity]"
+               class="form-control quantity-input" min="1" value="1">
+      </div>
+
+      <div class="col-md-2">
+        <label class="form-label">Unit Price</label>
+        <input type="number" name="invoice[invoice_items_attributes][INDEX][unit_price]"
+               class="form-control unit-price-input" step="0.01" min="0.01">
+      </div>
+
+      <div class="col-md-2">
+        <label class="form-label">Tax Rate (%)</label>
+        <input type="number" name="invoice[invoice_items_attributes][INDEX][tax_rate]"
+               class="form-control tax-rate-input" step="0.01" min="0">
+      </div>
+
+      <div class="col-md-1">
+        <label class="form-label">Total</label>
+        <div class="form-control-plaintext item-total">$0.00</div>
+      </div>
+
+      <div class="col-md-1">
+        <label class="form-label">&nbsp;</label>
+        <button type="button" class="btn btn-danger btn-sm d-block remove-item">
+          <i class="bi bi-trash"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+</template>

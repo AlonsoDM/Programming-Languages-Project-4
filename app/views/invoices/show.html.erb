@@ -1,0 +1,147 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1>Invoice #<%= @invoice.invoice_number %></h1>
+  <div>
+    <% if @invoice.draft? %>
+      <%= link_to "Send Invoice", send_invoice_invoice_path(@invoice), method: :patch,
+                class: "btn btn-success",
+                confirm: "This will mark the invoice as sent and update stock. Continue?",
+                data: { turbo_method: :patch } %>
+      <%= link_to "Edit", edit_invoice_path(@invoice), class: "btn btn-primary" %>
+    <% end %>
+    <%= link_to "Download PDF", pdf_invoice_path(@invoice), class: "btn btn-info" %>
+    <%= link_to "Back", invoices_path, class: "btn btn-secondary" %>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-8">
+    <!-- Invoice Details -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5>Invoice Details</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <dl class="row">
+              <dt class="col-sm-4">Invoice #:</dt>
+              <dd class="col-sm-8"><%= @invoice.invoice_number %></dd>
+
+              <dt class="col-sm-4">Date:</dt>
+              <dd class="col-sm-8"><%= @invoice.invoice_date.strftime('%B %d, %Y') %></dd>
+
+              <dt class="col-sm-4">Due Date:</dt>
+              <dd class="col-sm-8"><%= @invoice.due_date&.strftime('%B %d, %Y') || 'N/A' %></dd>
+
+              <dt class="col-sm-4">Status:</dt>
+              <dd class="col-sm-8">
+                <span class="badge bg-<%= case @invoice.status
+                  when 'paid' then 'success'
+                  when 'sent' then 'warning'
+                  when 'cancelled' then 'danger'
+                  else 'secondary'
+                  end %>">
+                  <%= @invoice.status_display %>
+                </span>
+              </dd>
+            </dl>
+          </div>
+
+          <div class="col-md-6">
+            <h6>Bill To:</h6>
+            <address>
+              <strong><%= @invoice.client.name %></strong><br>
+              <%= @invoice.client.email if @invoice.client.email.present? %><br>
+              <%= @invoice.client.phone if @invoice.client.phone.present? %><br>
+              <%= simple_format(@invoice.client.address) if @invoice.client.address.present? %>
+              <% if @invoice.client.tax_id.present? %>
+                <br><strong>Tax ID:</strong> <%= @invoice.client.tax_id %>
+              <% end %>
+            </address>
+          </div>
+        </div>
+
+        <% if @invoice.notes.present? %>
+          <hr>
+          <h6>Notes:</h6>
+          <p><%= simple_format(@invoice.notes) %></p>
+        <% end %>
+      </div>
+    </div>
+
+    <!-- Invoice Items -->
+    <div class="card">
+      <div class="card-header">
+        <h5>Invoice Items</h5>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th class="text-end">Qty</th>
+                <th class="text-end">Unit Price</th>
+                <th class="text-end">Tax Rate</th>
+                <th class="text-end">Subtotal</th>
+                <th class="text-end">Tax</th>
+                <th class="text-end">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @invoice_items.each do |item| %>
+                <tr>
+                  <td><%= item.product.name %></td>
+                  <td class="text-end"><%= item.quantity %></td>
+                  <td class="text-end">$<%= sprintf('%.2f', item.unit_price) %></td>
+                  <td class="text-end"><%= item.tax_rate %>%</td>
+                  <td class="text-end">$<%= sprintf('%.2f', item.line_total) %></td>
+                  <td class="text-end">$<%= sprintf('%.2f', item.tax_amount) %></td>
+                  <td class="text-end">$<%= sprintf('%.2f', item.line_total + item.tax_amount) %></td>
+                </tr>
+              <% end %>
+            </tbody>
+            <tfoot>
+              <tr>
+                <th colspan="6" class="text-end">Subtotal:</th>
+                <th class="text-end">$<%= sprintf('%.2f', @invoice.subtotal) %></th>
+              </tr>
+              <tr>
+                <th colspan="6" class="text-end">Tax:</th>
+                <th class="text-end">$<%= sprintf('%.2f', @invoice.tax_amount) %></th>
+              </tr>
+              <tr class="table-primary">
+                <th colspan="6" class="text-end">Total:</th>
+                <th class="text-end">$<%= sprintf('%.2f', @invoice.total) %></th>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <!-- Quick Stats -->
+    <div class="card">
+      <div class="card-header">
+        <h5>Summary</h5>
+      </div>
+      <div class="card-body">
+        <dl class="row">
+          <dt class="col-sm-8">Items:</dt>
+          <dd class="col-sm-4 text-end"><%= @invoice_items.sum(&:quantity) %></dd>
+
+          <dt class="col-sm-8">Subtotal:</dt>
+          <dd class="col-sm-4 text-end">$<%= sprintf('%.2f', @invoice.subtotal) %></dd>
+
+          <dt class="col-sm-8">Tax:</dt>
+          <dd class="col-sm-4 text-end">$<%= sprintf('%.2f', @invoice.tax_amount) %></dd>
+
+          <dt class="col-sm-8 border-top pt-2"><strong>Total:</strong></dt>
+          <dd class="col-sm-4 text-end border-top pt-2"><strong>$<%= sprintf('%.2f', @invoice.total) %></strong></dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+</div>

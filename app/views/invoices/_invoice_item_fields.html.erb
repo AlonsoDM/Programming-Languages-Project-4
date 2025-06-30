@@ -1,0 +1,47 @@
+<div class="invoice-item border p-3 mb-3">
+  <%= f.hidden_field :id if f.object&.persisted? %>
+  <%= f.hidden_field :_destroy %>
+
+  <div class="row">
+    <div class="col-md-4">
+      <%= f.label :product_id, "Product", class: "form-label" %>
+      <%= f.select :product_id, options_from_collection_for_select(@products, :id, :name, f.object&.product_id),
+                 { prompt: 'Select a product' },
+                 { class: "form-select product-select",
+                   data: {
+                     price: f.object&.product&.price,
+                     tax_rate: f.object&.product&.tax_rate&.rate,
+                     stock: f.object&.product&.stock_quantity
+                   } } %>
+    </div>
+
+    <div class="col-md-2">
+      <%= f.label :quantity, class: "form-label" %>
+      <%= f.number_field :quantity, class: "form-control quantity-input", min: 1, value: f.object&.quantity || 1 %>
+    </div>
+
+    <div class="col-md-2">
+      <%= f.label :unit_price, "Unit Price", class: "form-label" %>
+      <%= f.number_field :unit_price, class: "form-control unit-price-input", step: 0.01, min: 0.01, value: f.object&.unit_price %>
+    </div>
+
+    <div class="col-md-2">
+      <%= f.label :tax_rate, "Tax Rate (%)", class: "form-label" %>
+      <%= f.number_field :tax_rate, class: "form-control tax-rate-input", step: 0.01, min: 0, value: f.object&.tax_rate %>
+    </div>
+
+    <div class="col-md-1">
+      <%= f.label :line_total, "Total", class: "form-label" %>
+      <div class="form-control-plaintext item-total">
+        $<%= sprintf('%.2f', f.object&.line_total_with_tax || 0) %>
+      </div>
+    </div>
+
+    <div class="col-md-1">
+      <label class="form-label">&nbsp;</label>
+      <button type="button" class="btn btn-danger btn-sm d-block remove-item">
+        <i class="bi bi-trash"></i>
+      </button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,155 @@
+<!-- app/views/dashboard/index.html.erb -->
+<div class="row">
+  <div class="col-12">
+    <h1>Dashboard</h1>
+  </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="row mb-4">
+  <div class="col-md-3">
+    <div class="card bg-primary text-white">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h5 class="card-title">Total Products</h5>
+            <h2><%= @total_products %></h2>
+          </div>
+          <div class="align-self-center">
+            <i class="bi bi-box-seam fs-1"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-3">
+    <div class="card bg-success text-white">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h5 class="card-title">Total Clients</h5>
+            <h2><%= @total_clients %></h2>
+          </div>
+          <div class="align-self-center">
+            <i class="bi bi-people fs-1"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-3">
+    <div class="card bg-warning text-white">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h5 class="card-title">Pending Invoices</h5>
+            <h2><%= @pending_invoices %></h2>
+          </div>
+          <div class="align-self-center">
+            <i class="bi bi-file-earmark-text fs-1"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-3">
+    <div class="card bg-danger text-white">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h5 class="card-title">Low Stock Items</h5>
+            <h2><%= @low_stock_products.count %></h2>
+          </div>
+          <div class="align-self-center">
+            <i class="bi bi-exclamation-triangle fs-1"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Low Stock Alert -->
+<% if @low_stock_products.any? %>
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="alert alert-warning">
+        <h5><i class="bi bi-exclamation-triangle"></i> Low Stock Alert</h5>
+        <p>The following products are running low on stock:</p>
+        <ul class="mb-0">
+          <% @low_stock_products.each do |product| %>
+            <li>
+              <%= link_to product.name, product_path(product), class: "alert-link" %>
+              - Current: <%= product.stock_quantity %>, Minimum: <%= product.minimum_stock %>
+            </li>
+          <% end %>
+        </ul>
+      </div>
+    </div>
+  </div>
+<% end %>
+
+<!-- Recent Activity -->
+<div class="row">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Recent Invoices</h5>
+        <%= link_to "View All", invoices_path, class: "btn btn-sm btn-outline-primary" %>
+      </div>
+      <div class="card-body">
+        <% if @recent_invoices.any? %>
+          <div class="table-responsive">
+            <table class="table table-sm">
+              <thead>
+                <tr>
+                  <th>Invoice #</th>
+                  <th>Client</th>
+                  <th>Date</th>
+                  <th>Total</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% @recent_invoices.each do |invoice| %>
+                  <tr>
+                    <td><%= link_to invoice.invoice_number, invoice_path(invoice) %></td>
+                    <td><%= invoice.client.name %></td>
+                    <td><%= invoice.invoice_date.strftime('%m/%d/%Y') %></td>
+                    <td>$<%= sprintf('%.2f', invoice.total) %></td>
+                    <td>
+                      <span class="badge bg-<%= invoice.status == 'paid' ? 'success' : invoice.status == 'sent' ? 'warning' : 'secondary' %>">
+                        <%= invoice.status_display %>
+                      </span>
+                    </td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+        <% else %>
+          <p class="text-muted">No invoices yet.</p>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Quick Actions</h5>
+      </div>
+      <div class="card-body">
+        <div class="d-grid gap-2">
+          <%= link_to "Create New Invoice", new_invoice_path, class: "btn btn-primary" %>
+          <%= link_to "Add New Product", new_product_path, class: "btn btn-success" %>
+          <%= link_to "Add New Client", new_client_path, class: "btn btn-info" %>
+          <%= link_to "Manage Tax Rates", tax_rates_path, class: "btn btn-secondary" %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

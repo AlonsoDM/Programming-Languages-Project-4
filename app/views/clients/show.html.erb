@@ -1,0 +1,92 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1><%= @client.name %></h1>
+  <div>
+    <%= link_to "Edit", edit_client_path(@client), class: "btn btn-primary" %>
+    <%= link_to "Back", clients_path, class: "btn btn-secondary" %>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-6">
+    <!-- Client Details -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5>Client Information</h5>
+      </div>
+      <div class="card-body">
+        <dl class="row">
+          <dt class="col-sm-3">Name:</dt>
+          <dd class="col-sm-9"><%= @client.name %></dd>
+
+          <dt class="col-sm-3">Email:</dt>
+          <dd class="col-sm-9"><%= @client.email || 'N/A' %></dd>
+
+          <dt class="col-sm-3">Phone:</dt>
+          <dd class="col-sm-9"><%= @client.phone || 'N/A' %></dd>
+
+          <dt class="col-sm-3">Tax ID:</dt>
+          <dd class="col-sm-9"><%= @client.tax_id || 'N/A' %></dd>
+
+          <dt class="col-sm-3">Address:</dt>
+          <dd class="col-sm-9">
+            <%= @client.address.present? ? simple_format(@client.address) : 'N/A' %>
+          </dd>
+
+          <dt class="col-sm-3">Status:</dt>
+          <dd class="col-sm-9">
+            <span class="badge bg-<%= @client.active? ? 'success' : 'secondary' %>">
+              <%= @client.active? ? 'Active' : 'Inactive' %>
+            </span>
+          </dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <!-- Recent Invoices -->
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Recent Invoices</h5>
+        <%= link_to "New Invoice", new_invoice_path(client_id: @client.id), class: "btn btn-sm btn-primary" %>
+      </div>
+      <div class="card-body">
+        <% if @invoices.any? %>
+          <div class="table-responsive">
+            <table class="table table-sm">
+              <thead>
+                <tr>
+                  <th>Invoice #</th>
+                  <th>Date</th>
+                  <th>Total</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% @invoices.each do |invoice| %>
+                  <tr>
+                    <td><%= link_to invoice.invoice_number, invoice_path(invoice) %></td>
+                    <td><%= invoice.invoice_date.strftime('%m/%d/%Y') %></td>
+                    <td>$<%= sprintf('%.2f', invoice.total) %></td>
+                    <td>
+                      <span class="badge bg-<%= case invoice.status
+                        when 'paid' then 'success'
+                        when 'sent' then 'warning'
+                        when 'cancelled' then 'danger'
+                        else 'secondary'
+                        end %>">
+                        <%= invoice.status_display %>
+                      </span>
+                    </td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+        <% else %>
+          <p class="text-muted">No invoices yet.</p>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
