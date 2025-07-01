@@ -87,22 +87,22 @@
 <template id="invoice-item-template">
   <div class="invoice-item border p-3 mb-3">
     <div class="row">
-      <div class="col-md-4">
-              <label class="form-label">Product</label>
-              <select name="invoice[invoice_items_attributes][INDEX][product_id]" class="form-select product-select">
-                <option value="">Select a product</option>
-                <% @products.each do |product| %>
-                  <% if product.active? %>
-                    <option value="<%= product.id %>"
-                            data-price="<%= product.price %>"
-                            data-tax-rate="<%= product.tax_rate.rate %>"
-                            data-stock="<%= product.stock_quantity %>">
-                      <%= product.name %> - $<%= sprintf('%.2f', product.price) %> (Stock: <%= product.stock_quantity %>)
-                    </option>
-                  <% end %>
-                <% end %>
-              </select>
-        </div>
+      <div class="col-md-5">
+        <label class="form-label">Product</label>
+        <select name="invoice[invoice_items_attributes][INDEX][product_id]" class="form-select product-select">
+          <option value="">Select a product</option>
+          <% @products.each do |product| %>
+            <% if product.active? %>
+              <option value="<%= product.id %>"
+                      data-price="<%= product.price %>"
+                      data-tax-rate="<%= product.tax_rate.rate %>"
+                      data-stock="<%= product.stock_quantity %>">
+                <%= product.name %> - $<%= sprintf('%.2f', product.price) %> (Stock: <%= product.stock_quantity %>)
+              </option>
+            <% end %>
+          <% end %>
+        </select>
+      </div>
 
       <div class="col-md-2">
         <label class="form-label">Quantity</label>
@@ -112,23 +112,18 @@
 
       <div class="col-md-2">
         <label class="form-label">Unit Price</label>
-        <input type="number" name="invoice[invoice_items_attributes][INDEX][unit_price]"
-               class="form-control unit-price-input" step="0.01" min="0.01">
+        <input type="hidden" name="invoice[invoice_items_attributes][INDEX][unit_price]"
+               class="unit-price-input">
+        <div class="form-control-plaintext unit-price-display">$0.00</div>
+        <small class="text-muted">Auto-filled from product</small>
       </div>
 
       <div class="col-md-2">
         <label class="form-label">Tax Rate (%)</label>
-        <select name="invoice[invoice_items_attributes][INDEX][tax_rate]" class="form-select tax-rate-input">
-          <option value="">Select tax rate</option>
-          <% TaxRate.active.ordered.each do |tax_rate| %>
-            <option value="<%= tax_rate.rate %>"><%= tax_rate.display_name %></option>
-          <% end %>
-        </select>
-      </div>
-
-      <div class="col-md-1">
-        <label class="form-label">Total</label>
-        <div class="form-control-plaintext item-total">$0.00</div>
+        <input type="hidden" name="invoice[invoice_items_attributes][INDEX][tax_rate]"
+               class="tax-rate-input">
+        <div class="form-control-plaintext tax-rate-display">0%</div>
+        <small class="text-muted">Auto-filled from product</small>
       </div>
 
       <div class="col-md-1">
@@ -136,6 +131,15 @@
         <button type="button" class="btn btn-danger btn-sm d-block remove-item">
           <i class="bi bi-trash"></i>
         </button>
+      </div>
+    </div>
+
+    <div class="row mt-2">
+      <div class="col-md-8"></div>
+      <div class="col-md-4">
+        <div class="text-end">
+          <strong>Line Total: <span class="item-total">$0.00</span></strong>
+        </div>
       </div>
     </div>
   </div>
@@ -190,35 +194,38 @@ document.addEventListener('DOMContentLoaded', function() {
 
       if (option.value) {
         const unitPriceInput = item.querySelector('.unit-price-input');
-        const taxRateSelect = item.querySelector('.tax-rate-input');
+        const unitPriceDisplay = item.querySelector('.unit-price-display');
+        const taxRateInput = item.querySelector('.tax-rate-input');
+        const taxRateDisplay = item.querySelector('.tax-rate-display');
 
+        // Set hidden input values and display values
         unitPriceInput.value = option.dataset.price;
+        unitPriceDisplay.textContent = '$' + parseFloat(option.dataset.price).toFixed(2);
 
-        // Set tax rate dropdown to match product's tax rate
-        const productTaxRate = option.dataset.taxRate;
-        for (let i = 0; i < taxRateSelect.options.length; i++) {
-          if (taxRateSelect.options[i].value == productTaxRate) {
-            taxRateSelect.selectedIndex = i;
-            break;
-          }
-        }
+        taxRateInput.value = option.dataset.taxRate;
+        taxRateDisplay.textContent = option.dataset.taxRate + '%';
+
+        updateItemTotal(item);
+      } else {
+        // Clear values when no product is selected
+        const unitPriceInput = item.querySelector('.unit-price-input');
+        const unitPriceDisplay = item.querySelector('.unit-price-display');
+        const taxRateInput = item.querySelector('.tax-rate-input');
+        const taxRateDisplay = item.querySelector('.tax-rate-display');
+
+        unitPriceInput.value = '';
+        unitPriceDisplay.textContent = '$0.00';
+        taxRateInput.value = '';
+        taxRateDisplay.textContent = '0%';
 
         updateItemTotal(item);
       }
     }
   });
 
-  // Quantity, price, or tax rate changes (using event delegation)
+  // Quantity changes (using event delegation)
   document.addEventListener('input', function(e) {
-    if (e.target.classList.contains('quantity-input') ||
-        e.target.classList.contains('unit-price-input')) {
-      const item = e.target.closest('.invoice-item');
-      updateItemTotal(item);
-    }
-  });
-
-  document.addEventListener('change', function(e) {
-    if (e.target.classList.contains('tax-rate-input')) {
+    if (e.target.classList.contains('quantity-input')) {
       const item = e.target.closest('.invoice-item');
       updateItemTotal(item);
     }

@@ -11,6 +11,7 @@
       <%= link_to "Draft", invoices_path(status: 'draft'), class: "btn #{'btn-primary' if params[:status] == 'draft'} #{'btn-outline-primary' unless params[:status] == 'draft'}" %>
       <%= link_to "Sent", invoices_path(status: 'sent'), class: "btn #{'btn-primary' if params[:status] == 'sent'} #{'btn-outline-primary' unless params[:status] == 'sent'}" %>
       <%= link_to "Paid", invoices_path(status: 'paid'), class: "btn #{'btn-primary' if params[:status] == 'paid'} #{'btn-outline-primary' unless params[:status] == 'paid'}" %>
+      <%= link_to "Cancelled", invoices_path(status: 'cancelled'), class: "btn #{'btn-primary' if params[:status] == 'cancelled'} #{'btn-outline-primary' unless params[:status] == 'cancelled'}" %>
     </div>
   </div>
 </div>

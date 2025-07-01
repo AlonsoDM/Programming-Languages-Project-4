@@ -19,6 +19,7 @@ Rails.application.routes.draw do
   resources :invoices do
     member do
       patch :send_invoice
+      patch :mark_as_paid
       get :pdf
     end
   end

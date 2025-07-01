@@ -1,5 +1,5 @@
 class InvoicesController < ApplicationController
-  before_action :set_invoice, only: [:show, :edit, :update, :destroy, :send_invoice, :pdf]
+  before_action :set_invoice, only: [:show, :edit, :update, :destroy, :send_invoice, :mark_as_paid, :pdf]
 
   def index
     @invoices = Invoice.includes(:client).recent.page(params[:page]).per(20)
@@ -77,6 +77,22 @@ class InvoicesController < ApplicationController
     redirect_to @invoice
   end
 
+  # Mark sent invoices as paid
+  def mark_as_paid
+    if @invoice.sent? && @invoice.update(status: 'paid')
+      set_flash_message(:notice, 'Invoice was successfully marked as paid.')
+    else
+      if @invoice.paid?
+        set_flash_message(:alert, 'Invoice is already marked as paid.')
+      elsif !@invoice.sent?
+        set_flash_message(:alert, 'Only sent invoices can be marked as paid.')
+      else
+        set_flash_message(:alert, 'Unable to mark invoice as paid.')
+      end
+    end
+    redirect_to @invoice
+  end
+
   def pdf
     pdf_service = InvoicePdfService.new(@invoice)
     pdf_content = pdf_service.generate
@@ -97,8 +113,24 @@ class InvoicesController < ApplicationController
     params.require(:invoice).permit(
       :client_id, :invoice_date, :due_date, :notes,
       invoice_items_attributes: [
-        :id, :product_id, :quantity, :unit_price, :tax_rate, :_destroy
+        :id, :product_id, :quantity, :_destroy
+        # unit_price and tax_rate should be auto-populated from product
       ]
     )
+  end
+  # Automatically set unit_price and tax_rate based on selected products
+  def set_product_prices_and_tax_rates
+    return unless params[:invoice] && params[:invoice][:invoice_items_attributes]
+
+    params[:invoice][:invoice_items_attributes].each do |_index, item_attrs|
+      next if item_attrs[:product_id].blank? || item_attrs[:_destroy] == '1'
+
+      product = Product.find_by(id: item_attrs[:product_id])
+      next unless product
+
+      # Override any manually set prices/tax rates with product defaults
+      item_attrs[:unit_price] = product.price.to_s
+      item_attrs[:tax_rate] = product.tax_rate.rate.to_s
+    end
   end
 end
