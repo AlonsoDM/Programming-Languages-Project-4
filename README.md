@@ -70,7 +70,7 @@ The application follows Rails conventions and SOLID principles:
 ## Dependencies
 
 - Ruby 3.1+
-- Rails 7.1+
+- Rails 8.0+
 - SQLite3 (development/test)
 - Bootstrap 5.2
 - Prawn (PDF generation)
@@ -80,7 +80,7 @@ The application follows Rails conventions and SOLID principles:
 
 ```
 app/
-├── controllers/     # RESTful controllers
+├── controllers/    # RESTful controllers
 ├── models/         # Business logic and validations
 ├── views/          # ERB templates with Bootstrap styling
 ├── services/       # Business services (PDF generation)
