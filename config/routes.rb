@@ -4,10 +4,16 @@ Rails.application.routes.draw do
   resources :products do
     member do
       patch :stock_movement
+      patch :toggle_active
     end
   end
 
-  resources :clients
+  resources :clients do
+    member do
+      patch :toggle_active
+    end
+  end
+
   resources :tax_rates
 
   resources :invoices do

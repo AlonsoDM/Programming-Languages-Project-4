@@ -1,8 +1,21 @@
 class ClientsController < ApplicationController
-  before_action :set_client, only: [:show, :edit, :update, :destroy]
+  before_action :set_client, only: [:show, :edit, :update, :destroy, :toggle_active]
 
   def index
-    @clients = Client.active.ordered.page(params[:page]).per(20)
+    @clients = Client.ordered
+
+    # Filter by status if specified
+    case params[:status]
+    when 'active'
+      @clients = @clients.active
+    when 'inactive'
+      @clients = @clients.where(active: false)
+    else
+      # Show all by default, but we could change this to active only if preferred
+      @clients = @clients
+    end
+
+    @clients = @clients.page(params[:page]).per(20)
   end
 
   def show
@@ -38,12 +51,26 @@ class ClientsController < ApplicationController
 
   def destroy
     if @client.invoices.any?
-      set_flash_message(:alert, 'Cannot delete client with existing invoices.')
+      set_flash_message(:alert, 'Cannot delete client with existing invoices. Use "Set Inactive" instead.')
+      redirect_to @client
     else
-      @client.update(active: false)
+      @client.destroy
       set_flash_message(:notice, 'Client was successfully deleted.')
+      redirect_to clients_url
     end
-    redirect_to clients_url
+  end
+
+  def toggle_active
+    new_status = !@client.active?
+
+    if @client.update(active: new_status)
+      status_text = new_status ? 'activated' : 'deactivated'
+      set_flash_message(:notice, "Client was successfully #{status_text}.")
+    else
+      set_flash_message(:alert, 'Unable to update client status.')
+    end
+
+    redirect_to @client
   end
 
   private

@@ -11,6 +11,17 @@
   </div>
 <% end %>
 
+<!-- Filter by Status -->
+<div class="card mb-4">
+  <div class="card-body">
+    <div class="btn-group" role="group">
+      <%= link_to "All", products_path, class: "btn #{'btn-primary' if params[:status].blank?} #{'btn-outline-primary' unless params[:status].blank?}" %>
+      <%= link_to "Active", products_path(status: 'active'), class: "btn #{'btn-primary' if params[:status] == 'active'} #{'btn-outline-primary' unless params[:status] == 'active'}" %>
+      <%= link_to "Inactive", products_path(status: 'inactive'), class: "btn #{'btn-primary' if params[:status] == 'inactive'} #{'btn-outline-primary' unless params[:status] == 'inactive'}" %>
+    </div>
+  </div>
+</div>
+
 <div class="card">
   <div class="card-body">
     <div class="table-responsive">
@@ -29,12 +40,15 @@
         </thead>
         <tbody>
           <% @products.each do |product| %>
-            <tr class="<%= 'table-warning' if product.low_stock? %>">
+            <tr class="<%= 'table-warning' if product.low_stock? && product.active? %><%= 'table-secondary' unless product.active? %>">
               <td><%= product.sku %></td>
               <td>
                 <%= link_to product.name, product_path(product) %>
-                <% if product.low_stock? %>
+                <% if product.low_stock? && product.active? %>
                   <i class="bi bi-exclamation-triangle text-warning ms-2" title="Low Stock"></i>
+                <% end %>
+                <% unless product.active? %>
+                  <i class="bi bi-pause-circle text-muted ms-2" title="Inactive"></i>
                 <% end %>
               </td>
               <td>$<%= sprintf('%.2f', product.price) %></td>
@@ -49,10 +63,22 @@
               <td>
                 <%= link_to "View", product_path(product), class: "btn btn-sm btn-outline-primary" %>
                 <%= link_to "Edit", edit_product_path(product), class: "btn btn-sm btn-outline-secondary" %>
-                <%= link_to "Delete", product_path(product), method: :delete,
-                          class: "btn btn-sm btn-outline-danger",
-                          confirm: "Are you sure?",
-                          data: { turbo_method: :delete } %>
+                <% if product.active? %>
+                  <%= button_to "Set Inactive", toggle_active_product_path(product),
+                                method: :patch,
+                                class: "btn btn-sm btn-outline-warning",
+                                form: { data: { turbo_confirm: "Set this product as inactive?" } } %>
+                <% else %>
+                  <%= button_to "Set Active", toggle_active_product_path(product),
+                                method: :patch,
+                                class: "btn btn-sm btn-outline-success" %>
+                <% end %>
+                <% unless product.invoice_items.any? %>
+                  <%= button_to "Delete", product_path(product),
+                                method: :delete,
+                                class: "btn btn-sm btn-outline-danger",
+                                form: { data: { turbo_confirm: "Are you sure? This cannot be undone." } } %>
+                <% end %>
               </td>
             </tr>
           <% end %>

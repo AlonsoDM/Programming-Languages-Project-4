@@ -1,10 +1,21 @@
 class ProductsController < ApplicationController
-  before_action :set_product, only: [:show, :edit, :update, :destroy, :stock_movement]
+  before_action :set_product, only: [:show, :edit, :update, :destroy, :stock_movement, :toggle_active]
 
   def index
-    @products = Product.active.includes(:tax_rate)
-                      .page(params[:page])
-                      .per(20)
+    @products = Product.includes(:tax_rate).ordered
+
+    # Filter by status if specified
+    case params[:status]
+    when 'active'
+      @products = @products.active
+    when 'inactive'
+      @products = @products.where(active: false)
+    else
+      # Show all by default, but we could change this to active only if preferred
+      @products = @products
+    end
+
+    @products = @products.page(params[:page]).per(20)
     @low_stock_products = Product.active.low_stock
   end
 
@@ -46,12 +57,26 @@ class ProductsController < ApplicationController
 
   def destroy
     if @product.invoice_items.any?
-      set_flash_message(:alert, 'Cannot delete product that has been invoiced.')
+      set_flash_message(:alert, 'Cannot delete product that has been invoiced. Use "Set Inactive" instead.')
+      redirect_to @product
     else
-      @product.update(active: false)
+      @product.destroy
       set_flash_message(:notice, 'Product was successfully deleted.')
+      redirect_to products_url
     end
-    redirect_to products_url
+  end
+
+  def toggle_active
+    new_status = !@product.active?
+
+    if @product.update(active: new_status)
+      status_text = new_status ? 'activated' : 'deactivated'
+      set_flash_message(:notice, "Product was successfully #{status_text}.")
+    else
+      set_flash_message(:alert, 'Unable to update product status.')
+    end
+
+    redirect_to @product
   end
 
   def stock_movement
