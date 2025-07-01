@@ -6,6 +6,7 @@ class InvoiceItem < ApplicationRecord
   validates :unit_price, presence: true, numericality: { greater_than: 0 }
   validates :tax_rate, presence: true, numericality: { greater_than_or_equal_to: 0 }
 
+  before_validation :set_product_attributes
   before_save :calculate_totals
 
   def line_total_before_tax
@@ -21,6 +22,13 @@ class InvoiceItem < ApplicationRecord
   end
 
   private
+
+  def set_product_attributes
+    if product.present? && (unit_price.blank? || tax_rate.blank?)
+      self.unit_price = product.price if unit_price.blank?
+      self.tax_rate = product.tax_rate.rate if tax_rate.blank?
+    end
+  end
 
   def calculate_totals
     self.line_total = line_total_before_tax

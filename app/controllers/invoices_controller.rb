@@ -22,6 +22,9 @@ class InvoicesController < ApplicationController
     @clients = Client.active.ordered
     @products = Product.active.ordered
 
+    # Populate unit_price and tax_rate from products before validation
+    populate_item_attributes
+
     if @invoice.save
       @invoice.calculate_totals!
       set_flash_message(:notice, 'Invoice was successfully created.')
@@ -48,6 +51,9 @@ class InvoicesController < ApplicationController
 
     @clients = Client.active.ordered
     @products = Product.active.ordered
+
+    # Populate unit_price and tax_rate from products before validation
+    populate_item_attributes
 
     if @invoice.update(invoice_params)
       @invoice.calculate_totals!
@@ -113,13 +119,13 @@ class InvoicesController < ApplicationController
     params.require(:invoice).permit(
       :client_id, :invoice_date, :due_date, :notes,
       invoice_items_attributes: [
-        :id, :product_id, :quantity, :_destroy
-        # unit_price and tax_rate should be auto-populated from product
+        :id, :product_id, :quantity, :unit_price, :tax_rate, :_destroy
       ]
     )
   end
+
   # Automatically set unit_price and tax_rate based on selected products
-  def set_product_prices_and_tax_rates
+  def populate_item_attributes
     return unless params[:invoice] && params[:invoice][:invoice_items_attributes]
 
     params[:invoice][:invoice_items_attributes].each do |_index, item_attrs|
@@ -128,9 +134,14 @@ class InvoicesController < ApplicationController
       product = Product.find_by(id: item_attrs[:product_id])
       next unless product
 
-      # Override any manually set prices/tax rates with product defaults
-      item_attrs[:unit_price] = product.price.to_s
-      item_attrs[:tax_rate] = product.tax_rate.rate.to_s
+      # Set unit_price and tax_rate if they're blank or zero
+      if item_attrs[:unit_price].blank? || item_attrs[:unit_price].to_f.zero?
+        item_attrs[:unit_price] = product.price.to_s
+      end
+
+      if item_attrs[:tax_rate].blank? || item_attrs[:tax_rate].to_f.zero?
+        item_attrs[:tax_rate] = product.tax_rate.rate.to_s
+      end
     end
   end
 end

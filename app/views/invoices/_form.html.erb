@@ -91,15 +91,13 @@
         <label class="form-label">Product</label>
         <select name="invoice[invoice_items_attributes][INDEX][product_id]" class="form-select product-select">
           <option value="">Select a product</option>
-          <% @products.each do |product| %>
-            <% if product.active? %>
-              <option value="<%= product.id %>"
-                      data-price="<%= product.price %>"
-                      data-tax-rate="<%= product.tax_rate.rate %>"
-                      data-stock="<%= product.stock_quantity %>">
-                <%= product.name %> - $<%= sprintf('%.2f', product.price) %> (Stock: <%= product.stock_quantity %>)
-              </option>
-            <% end %>
+          <% @products.select(&:active?).each do |product| %>
+            <option value="<%= product.id %>"
+                    data-price="<%= product.price %>"
+                    data-tax-rate="<%= product.tax_rate.rate %>"
+                    data-stock="<%= product.stock_quantity %>">
+              <%= product.name %> - $<%= sprintf('%.2f', product.price) %> (Stock: <%= product.stock_quantity %>)
+            </option>
           <% end %>
         </select>
       </div>
@@ -192,20 +190,26 @@ document.addEventListener('DOMContentLoaded', function() {
       const option = e.target.selectedOptions[0];
       const item = e.target.closest('.invoice-item');
 
-      if (option.value) {
+      if (option && option.value) {
         const unitPriceInput = item.querySelector('.unit-price-input');
         const unitPriceDisplay = item.querySelector('.unit-price-display');
         const taxRateInput = item.querySelector('.tax-rate-input');
         const taxRateDisplay = item.querySelector('.tax-rate-display');
 
-        // Set hidden input values and display values
-        unitPriceInput.value = option.dataset.price;
-        unitPriceDisplay.textContent = '$' + parseFloat(option.dataset.price).toFixed(2);
+        // Get data from the selected option
+        const price = option.dataset.price;
+        const taxRate = option.dataset.taxRate;
 
-        taxRateInput.value = option.dataset.taxRate;
-        taxRateDisplay.textContent = option.dataset.taxRate + '%';
+        if (price && taxRate) {
+          // Set hidden input values and display values
+          unitPriceInput.value = price;
+          unitPriceDisplay.textContent = '$' + parseFloat(price).toFixed(2);
 
-        updateItemTotal(item);
+          taxRateInput.value = taxRate;
+          taxRateDisplay.textContent = taxRate + '%';
+
+          updateItemTotal(item);
+        }
       } else {
         // Clear values when no product is selected
         const unitPriceInput = item.querySelector('.unit-price-input');
@@ -268,7 +272,9 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('invoice-total').textContent = '$' + total.toFixed(2);
   }
 
-  // Initial calculation
-  updateCalculations();
+  // Initial calculation for existing items
+  document.querySelectorAll('.invoice-item').forEach(function(item) {
+    updateItemTotal(item);
+  });
 });
 </script>
